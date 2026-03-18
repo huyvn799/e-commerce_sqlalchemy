@@ -1,22 +1,23 @@
 import os
 import psycopg2
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-# from .models import Base
+
+from .models import Base #lấy Base từ models -> tạo tables thông quua engine
 
 # Tải các biến môi trường từ file .env
 load_dotenv()
 
 # Lấy thông tin từ biến môi trường, có kèm giá trị mặc định nếu không tìm thấy
-DB_USER = os.getenv("DB_USER", "postgres")
+DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME", "ecommerce_db")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
 
 # Tạo URL kết nối cho SQLAlchemy
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 def ensure_database_exists():
     """Kiểm tra và tạo DB vật lý nếu chưa có"""
@@ -27,7 +28,7 @@ def ensure_database_exists():
             password=DB_PASSWORD,
             host=DB_HOST,
             port=DB_PORT,
-            dbname="postgres"
+            dbname=DB_NAME
         )
         conn.autocommit = True
         cur = conn.cursor()

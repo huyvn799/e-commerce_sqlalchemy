@@ -24,7 +24,7 @@ project_03/
 - **Python 3.10+**
 - **Poetry**: Quản lý môi trường ảo và thư viện.
 - **SQLAlchemy**: Thư viện ORM mạnh mẽ để mapping dữ liệu Python và SQL.
-- **Psycopg2**: Driver kết nối PostgreSQL.
+- **Psycopg2-binary**: Driver kết nối PostgreSQL.
 - **Faker**: Sinh dữ liệu giả (Tên, địa chỉ, ngày tháng, công ty...) một cách ngẫu nhiên nhưng thực tế.
 - **Python-dotenv**: Quản lý biến môi trường từ file .env.
 

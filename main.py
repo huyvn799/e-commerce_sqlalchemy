@@ -1,14 +1,12 @@
-from database.connection import ensure_database_exists
-# from data_generator.seeder import seed_data
+from database.connection import init_db
+from data_generator.seeder import seed_data
 
 if __name__ == "__main__":
-    print("--- BẮT ĐẦU PROJECT 03 ---")
+    print("--- BẮT ĐẦU PROJECT ---")
     
-    # Bước 1: Tạo Schema [cite: 10]
-    # init_db()
-    ensure_database_exists()
+    # Bước 1: Tạo Schema
+    init_db()
     
-    # Bước 2: Nạp Mock Data (Faker) [cite: 11]
-    # seed_data()
-    
+    # Bước 2: Nạp Mock Data (Faker)
+    seed_data()
     print("--- HOÀN TẤT ---")
