@@ -1,0 +1,22 @@
+[project]
+name = "project-3-schema"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "huyvn799",email = "quochuy2001.kb@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "sqlalchemy (>=2.0.48,<3.0.0)",
+    "psycopg2 (>=2.9.11,<3.0.0)",
+    "faker (>=40.11.0,<41.0.0)",
+    "python-dotenv (>=1.2.2,<2.0.0)"
+]
+
+[tool.poetry]
+packages = [{include = "project_3_schema", from = "src"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
