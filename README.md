@@ -33,6 +33,7 @@ project_03/
 - Đảm bảo bạn đã cài đặt Poetry. Nếu chưa, hãy cài bằng lệnh: pip install poetry.
 - Sau đó, tại thư mục gốc dự án, chạy lệnh để cài đặt các thư viện:
 `poetry install`
+
 **2. Cấu hình Database**
 - Tạo file .env tại thư mục gốc và nhập thông tin PostgreSQL của bạn:
 ```
