@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from .models import Base #lấy Base từ models -> tạo tables thông quua engine
+from .models import Base #lấy Base từ models -> tạo tables thông qua engine
 
 # Tải các biến môi trường từ file .env
 load_dotenv()
@@ -19,7 +19,7 @@ DB_NAME = os.getenv("DB_NAME")
 # Tạo URL kết nối cho SQLAlchemy
 DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-def ensure_database_exists():
+def ensure_database_exists(db_name):
     """Kiểm tra và tạo DB vật lý nếu chưa có"""
     try:
         # Kết nối tới db 'postgres' để quản trị
@@ -28,7 +28,7 @@ def ensure_database_exists():
             password=DB_PASSWORD,
             host=DB_HOST,
             port=DB_PORT,
-            dbname=DB_NAME
+            dbname=db_name
         )
         conn.autocommit = True
         cur = conn.cursor()
@@ -49,6 +49,11 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():
-    ensure_database_exists()
-    Base.metadata.create_all(bind=engine)
-    print("Schema initialized successfully!")
+    # ensure_database_exists('postgre')
+    # Đảm bảo đã tạo database ecommerce_db trước
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("Schema initialized successfully!")
+    except Exception as e:
+        print(f"Lỗi kết nối database: {e}")
+        raise

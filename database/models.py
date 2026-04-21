@@ -1,6 +1,7 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.sql.sqltypes import (
     Integer,
+    BigInteger,
     String,
     Numeric,
     Boolean,
@@ -55,20 +56,22 @@ class Product(Base):
 class Order(Base):
     __tablename__ = 'orders'
     order_id = Column(Integer, primary_key=True)
-    order_date = Column(DateTime)
-    seller_id = Column(Integer, ForeignKey('sellers.seller_id'))
+    order_date = Column(DateTime, nullable=False, index=True)
+    seller_id = Column(Integer, ForeignKey('sellers.seller_id'), index=True)
     status = Column(String(20)) # PLACED, PAID, etc.
     total_amount = Column(Numeric(12, 2))
     created_at = Column(DateTime, default=datetime.now(UTC))
 
 class OrderItem(Base):
     __tablename__ = 'order_items'
-    order_item_id = Column(Integer, primary_key=True)
-    order_id = Column(Integer, ForeignKey('orders.order_id'))
-    product_id = Column(Integer, ForeignKey('products.product_id'))
+    order_item_id = Column(BigInteger, primary_key=True)
+    order_id = Column(Integer, ForeignKey('orders.order_id'), index=True)
+    product_id = Column(Integer, ForeignKey('products.product_id'), index=True)
+    order_date = Column(DateTime)
     quantity = Column(Integer, nullable=False)
     unit_price = Column(Numeric(12, 2), nullable=False)
     subtotal = Column(Numeric(12, 2))
+    created_at = Column(DateTime, default=datetime.now(UTC))
 
 class Promotion(Base):
     __tablename__ = 'promotions'
