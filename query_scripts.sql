@@ -266,7 +266,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 4. Top Products per Brand
+-- 4. Top Products per Brand (top 1 sold)
 -- Filter: Orders within a specific date range. Optional filter by seller list.
 CREATE OR REPLACE FUNCTION get_top_products_per_brand(start_date TIMESTAMP, end_date TIMESTAMP, seller_list INT[] DEFAULT NULL)
 RETURNS TABLE (
@@ -300,8 +300,8 @@ BEGIN
         FROM order_items oi, cte_products_filtered_by_seller_list c_ids, cte_success_orders c_so
         WHERE oi.order_date >= DATE_TRUNC('day', start_date::date)
             AND oi.order_date < DATE_TRUNC('day', end_date::date + INTERVAL '1 day')
-            AND (oi.order_id IN c_so.order_id)
-            AND (oi.product_id IN c_ids.product_id)
+            AND oi.order_id IN (c_so.order_id)
+            AND oi.product_id IN (c_ids.product_id)
         GROUP BY oi.product_id
     ), cte_rank_products_by_brand AS (
         SELECT 
@@ -328,7 +328,7 @@ BEGIN
     FROM cte_rank_products_by_brand c_rank
     INNER JOIN brands b
     ON c_rank.brand_id = b.brand_id
-    WHERE rank_by_brand = 1 --lấy best seller product per brand
+    WHERE rank_by_brand = 1 -- lấy highest sold quantity
     ORDER BY brand_id DESC;
 END;
 $$ LANGUAGE plpgsql;
@@ -342,34 +342,65 @@ RETURNS TABLE (
     total_revenue NUMERIC(20,2)
 ) AS $$
 BEGIN
-    RETURN QUERY
-    IF category_list IS NULL THEN
-        WITH cte_orders_with_categories AS (
+    IF category_list IS NOT NULL THEN
+        RETURN QUERY
+        WITH cte_orders_by_category_list AS (
             SELECT
-                oi.order_id
+                oi.order_id,
+                SUM(oi.subtotal) AS total_amount
             FROM order_items oi
             INNER JOIN products p
                 ON oi.product_id = p.product_id
             WHERE oi.order_date >= DATE_TRUNC('day', start_date::TIMESTAMP)
                 AND oi.order_date < DATE_TRUNC('day', end_date::TIMESTAMP + INTERVAL '1 day')
                 AND p.category_id = ANY(category_list)
-        ),
-        SELECT
-            status,
-            COUNT(*) AS total_orders,
-            SUM(total_amount) AS total_revenue
-        FROM orders o,
-            cte_orders_with_categories cte
-        WHERE o.order_date >= DATE_TRUNC('day', start_date::TIMESTAMP)
-            AND o.order_date < DATE_TRUNC('day', end_date::TIMESTAMP + INTERVAL '1 day')
-            AND o.status IN ('COMPLETED', '')
-            AND (o.order_id IN cte.order_id)
-            AND (seller_list IS NULL OR o.seller_id = ANY(seller_list))
+            GROUP BY oi.order_id
+        ), cte_group_status AS (
+            SELECT 
+                o.order_id,
+                o.status,
+                CASE
+                    WHEN o.status IN ('PLACED', 'PAID', 'SHIPPED') THEN 'Pending'
+                    WHEN o.status = 'DELIVERED' THEN 'Completed'
+                    WHEN o.status IN ('CANCELLED', 'RETURNED') THEN 'Cancelled'
+                END AS status_group
+            FROM orders o
+            WHERE o.order_date >= DATE_TRUNC('day', start_date::TIMESTAMP)
+                AND o.order_date < DATE_TRUNC('day', end_date::TIMESTAMP + INTERVAL '1 day')
+                AND (seller_list IS NULL OR o.seller_id = ANY(seller_list))
+        )
+        SELECT 
+            status_group::VARCHAR,
+            COUNT(*)::INT AS total_orders,
+            SUM(c_cat.total_amount)::NUMERIC AS total_revenue
+        FROM cte_group_status c_gr
+        INNER JOIN cte_orders_by_category_list c_cat
+            ON c_gr.order_id = c_cat.order_id
+        GROUP BY status_group;
     ELSE
+        RETURN QUERY
+        WITH cte_group_status AS (
+            SELECT 
+                o.order_id,
+                o.status,
+                o.total_amount,
+                CASE
+                    WHEN o.status IN ('PLACED', 'PAID', 'SHIPPED') THEN 'Pending'
+                    WHEN o.status = 'DELIVERED' THEN 'Completed'
+                    WHEN o.status IN ('CANCELLED', 'RETURNED') THEN 'Cancelled'
+                END AS status_group
+            FROM orders o
+            WHERE o.order_date >= DATE_TRUNC('day', start_date::TIMESTAMP)
+                AND o.order_date < DATE_TRUNC('day', end_date::TIMESTAMP + INTERVAL '1 day')
+                AND (seller_list IS NULL OR o.seller_id = ANY(seller_list))
+        )
+        SELECT 
+            status_group::VARCHAR,
+            COUNT(*)::INT AS total_orders,
+            SUM(total_amount)::NUMERIC AS total_revenue
+        FROM cte_group_status cte
+        GROUP BY status_group;
+        
     END IF;
-    SELECT 
-    FROM orders o
-    WHERE 
-
 END;
 $$ LANGUAGE plpgsql;

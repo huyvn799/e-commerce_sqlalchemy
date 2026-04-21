@@ -96,7 +96,7 @@ DB_NAME=ecommerce_db
     - **Goal:** Compare sellers by total revenue and quantity sold.
     - **Columns:** `seller_id`, `seller_name`, `total_orders`, `total_quantity`, `total_revenue`
     - **Filter:** Orders within a specific date range. Optional filter by `category_id` or `brand_id`.
-    4. Top Products per Brand
+    4. Top Products per Brand (top 1 sold)
     - **Goal:** Identify top products for each brand by quantity sold.
     - **Columns:** `brand_id`, `brand_name`, `product_id`, `product_name`, `total_quantity`, `total_revenue`
     - **Filter:** Orders within a specific date range. Optional filter by *seller list.*
