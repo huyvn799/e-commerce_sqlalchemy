@@ -1,9 +1,21 @@
-from faker import Faker
 import random
-from datetime import timedelta
-from database.models import Brand, Category, Seller, Product, Promotion, PromotionProduct
+import numpy as np
+from decimal import Decimal
+from datetime import timedelta, datetime
+
+from database.models import (
+    Brand, 
+    Category, 
+    Seller, 
+    Product, 
+    Promotion, 
+    PromotionProduct, 
+    Order, 
+    OrderItem
+)
 from database.connection import SessionLocal
 
+from faker import Faker
 from faker.providers import BaseProvider
 
 # 1. Khởi tạo Faker với locale (ví dụ: Việt Nam)
@@ -140,5 +152,94 @@ def seed_data():
         session.add(mapping)
     session.commit()
     
-    print("Hoàn tất nạp dữ liệu!")
+    print("All demension data is created!")
+    session.close()
+
+def generate_distribution(total_records):
+    statuses = (
+        ['DELIVERED'] * int(total_records * 0.70) + 
+        ['SHIPPED'] * int(total_records * 0.11) + 
+        ['CANCELLED'] * int(total_records * 0.07) + 
+        ['PLACED'] * int(total_records * 0.05) + 
+        ['PAID'] * int(total_records * 0.04) + 
+        ['RETURNED'] * int(total_records * 0.03) 
+    )
+    np.random.shuffle(statuses)
+
+    return statuses
+
+def seed_transactions():
+    session =  SessionLocal()
+    # Lấy ds Products, mỗi product gồm {product_id, seller_id, price}
+    products = session.query(Product.product_id, Product.seller_id, Product.price).all()
+    
+    # Biến seller_product_map để group tất cả sản phẩm của mỗi seller_id
+    seller_product_map = {}
+    for p in products:
+        seller_product_map.setdefault(p.seller_id, []).append(p)
+    
+    # Biến seller_ids lưu tất cả seller_id
+    seller_ids = list(seller_product_map.keys())
+
+    batch_orders = []
+    batch_items = []
+
+    start_date = datetime(2025, 8, 1)
+    statuses = generate_distribution(3000000)
+
+    # Tạo 3 triệu đơn hàng
+    for i in range(3000000):
+        s_id = random.choice(seller_ids)
+
+        # Thoả điều kiện order_date trong khoảng 2025-8-1 đến 2025-10-31
+        o_date = start_date + timedelta(days=random.randint(0, 91), seconds=random.randint(0,86400))
+
+        # Chọn 3-5 sản phẩm của cùng seller đó
+        chosen_products = random.sample(seller_product_map[s_id], k=random.randint(3,5))
+
+        order_total = Decimal('0.00')
+        order_id = i + 1
+
+        # Tạo order_items cho order_id thứ i + 1
+        for p in chosen_products:
+            # Mỗi sản phẩm được mua với số lượng từ 1 đến 5
+            qty = random.randint(1,5)
+
+            # Tính subtotal
+            unit_price = Decimal(str(p.price))
+            sub_total = qty * unit_price
+            
+            # Cộng dồn order_total
+            order_total += sub_total
+
+            # Thêm vào batch_items
+            batch_items.append({
+                "order_id": order_id,
+                "product_id": p.product_id,
+                "order_date": o_date,
+                "quantity": qty,
+                "unit_price": unit_price,
+                "subtotal": sub_total,
+                "created_at":o_date
+            })
+
+        # Thêm vào batch_orders
+        batch_orders.append({
+            "order_id": order_id,
+            "order_date": o_date,
+            "seller_id": s_id,
+            "status": statuses[i],
+            "total_amount": order_total,
+            "created_at": o_date
+        })
+
+        # Bulk insert theo batch để tối ưu performance
+        if len(batch_orders) >= 10000:
+            session.bulk_insert_mappings(Order, batch_orders)
+            session.bulk_insert_mappings(OrderItem, batch_items)
+            session.commit()
+            batch_orders, batch_items = [], []
+            print(f"Progress: The batch_order starting with id_{i+1} inserted...")
+    
+    print(f"All transaction data is created")
     session.close()

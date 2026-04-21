@@ -24,6 +24,7 @@ project_03/
 - **Python 3.10+**
 - **Poetry**: Quản lý môi trường ảo và thư viện.
 - **SQLAlchemy**: Thư viện ORM mạnh mẽ để mapping dữ liệu Python và SQL.
+- **PostgreSQL**: Database
 - **Psycopg2-binary**: Driver kết nối PostgreSQL.
 - **Faker**: Sinh dữ liệu giả (Tên, địa chỉ, ngày tháng, công ty...) một cách ngẫu nhiên nhưng thực tế.
 - **Python-dotenv**: Quản lý biến môi trường từ file .env.
@@ -33,6 +34,7 @@ project_03/
 - Đảm bảo bạn đã cài đặt Poetry. Nếu chưa, hãy cài bằng lệnh: pip install poetry.
 - Sau đó, tại thư mục gốc dự án, chạy lệnh để cài đặt các thư viện:
 `poetry install`
+- Tạo database postgreSQL đặt tên là `ecommerce_db`
 
 **2. Cấu hình Database**
 - Tạo file .env tại thư mục gốc và nhập thông tin PostgreSQL của bạn:
@@ -59,3 +61,46 @@ DB_NAME=ecommerce_db
 - Tạo 2000 sản phẩm gắn với các ID ngẫu nhiên từ các bảng trên.
 - Tạo các chương trình khuyến mãi (Promotions) với logic thời gian thực tế.
 - Liên kết sản phẩm và khuyến mãi (PromotionProduct).
+- Tạo 3 triệu đơn hàng với chi tiết đơn hàng phụ thuộc seller của sản phấm đó
+- Phân bổ tỉ lệ đơn hàng theo 6 trạng thái:
+    - DELIVERED: 70%
+    - SHIPPED: 11%
+    - CANCELLED: 7%
+    - PLACED: 5%
+    - PAID: 4%
+    - RETURNED: 3%
+- Chi tiết đơn hàng: mỗi đơn hàng sẽ gồm 3-5 sản phẩm, mỗi sản phẩm có số lượng ngẫu nhiên từ 1 đến 5
+
+5. **Thực hiện query SQL trong file ```query_scripts.sql```**
+- Thực hiện các câu query theo yêu cầu sau:
+    1. Total revenue per month
+    2. Orders filtered by seller and date
+    3. Filter data in order_item by product_id
+    4. Find order with highest total_amount
+    5. List products with highest quantity sold
+    6. Orders by Seller in October
+    7. Revenue per Product per Month
+    8. Products Sold per Seller
+- So sánh kết quả trước và sau khi sử dụng partitioning cho bảng orders, order_items và indexing cho bảng order_items (product_id)
+- Hình ảnh snapshot kết quả bao gồm **Run-time** và **Execution Plan** ở trong folder ```snapshot```
+- Viết các function, store procedure theo yêu cầu sau:
+    1. Monthly Revenue Report
+    - **Goal:** Show total revenue and total orders per month.
+    - **Columns:** `month`, `total_orders`, `total_quantity`, `total_revenue`
+    - **Filter:** Orders within a specific date range (`start_date` to `end_date`)
+    2. Daily Revenue Report
+    - **Goal:** Show total revenue and total orders per month.
+    - **Columns:** `date`, `total_orders`, `total_quantity`, `total_revenue`
+    - **Filter:** Orders within a specific date range (`start_date` to `end_date`) and *product list*
+    3. Seller Performance Report
+    - **Goal:** Compare sellers by total revenue and quantity sold.
+    - **Columns:** `seller_id`, `seller_name`, `total_orders`, `total_quantity`, `total_revenue`
+    - **Filter:** Orders within a specific date range. Optional filter by `category_id` or `brand_id`.
+    4. Top Products per Brand
+    - **Goal:** Identify top products for each brand by quantity sold.
+    - **Columns:** `brand_id`, `brand_name`, `product_id`, `product_name`, `total_quantity`, `total_revenue`
+    - **Filter:** Orders within a specific date range. Optional filter by *seller list.*
+    5. Orders Status Summary
+    - **Goal:** Count orders per status (completed, pending, cancelled).
+    - **Columns:** `status`, `total_orders`, `total_revenue`
+    - **Filter:** Orders within a specific date range; optionally filter by seller list or category list.
